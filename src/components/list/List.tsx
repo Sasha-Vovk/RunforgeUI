@@ -1,10 +1,19 @@
-import { formatDateTime, formatDuration, pluralize, type Run } from "@/shared";
+import {
+  formatDateTime,
+  formatDuration,
+  pluralize,
+  type Run,
+  type SortField,
+  type SortState,
+} from "@/shared";
 import { StatusBadge } from "../status-badge/StatusBadge";
 import styles from "./List.module.css";
 
 type Props = {
   runs: Run[];
+  sort: SortState;
   onSelect: (run: Run) => void;
+  onSortChange: (field: SortField) => void;
 };
 
 const RunRow = ({
@@ -43,20 +52,63 @@ const RunRow = ({
   );
 };
 
-export const List = ({ runs, onSelect }: Props) => {
+const SortHeader = ({
+  field,
+  label,
+  sort,
+  onSortChange,
+}: {
+  field: SortField;
+  label: string;
+  sort: SortState;
+  onSortChange: (field: SortField) => void;
+}) => {
+  const active = sort.field === field;
+  const arrow = active ? (sort.direction === "asc" ? "↑" : "↓") : "↕";
+
+  return (
+    <button
+      type="button"
+      className={`${styles.headerBtn} ${active ? styles.headerBtnActive : ""}`}
+      onClick={() => onSortChange(field)}
+      aria-label={
+        active
+          ? `Sort by ${label}, currently ${sort.direction === "asc" ? "ascending" : "descending"}`
+          : `Sort by ${label}`
+      }
+    >
+      {label}
+      <span className={styles.sortIndicator} aria-hidden="true">
+        {arrow}
+      </span>
+    </button>
+  );
+};
+
+export const List = ({ runs, sort, onSelect, onSortChange }: Props) => {
   return (
     <div className={styles.wrapper}>
       <div className={styles.meta}>
         {runs.length} {pluralize(runs.length, "run", "runs")} found
       </div>
 
-      <div className={styles.header} aria-hidden="true">
+      <div className={styles.header}>
         <span>Run</span>
         <span>Repository</span>
         <span>Branch</span>
         <span>Status</span>
-        <span>Created</span>
-        <span>Duration</span>
+        <SortHeader
+          field="createdAt"
+          label="Created"
+          sort={sort}
+          onSortChange={onSortChange}
+        />
+        <SortHeader
+          field="durationSeconds"
+          label="Duration"
+          sort={sort}
+          onSortChange={onSortChange}
+        />
       </div>
 
       <ul className={styles.list}>

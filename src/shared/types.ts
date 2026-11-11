@@ -13,3 +13,12 @@ export type Run = {
 };
 
 export type LoadState = "loading" | "error" | "ready";
+export type SortField = "createdAt" | "durationSeconds";
+export type SortDirection = "asc" | "desc";
+export type SortState = { field: SortField; direction: SortDirection };
+
+export type RunsUrlState = {
+  search: string;
+  status: RunStatus | "all";
+  sort: SortState;
+};

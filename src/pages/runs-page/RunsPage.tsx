@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   STATUS_FILTERS,
+  useRunsUrlState,
+  DEFAULT_RUNS_URL_STATE,
   type LoadState,
   type Run,
   type RunStatus,
+  type SortField,
 } from "@/shared";
 import { fetchRuns } from "../../server/mockService";
 import { Filters } from "../../components/filters/Filters";
@@ -12,12 +15,13 @@ import { Drawer } from "../../components/drawer/Drawer";
 import { LoadingSkeleton } from "../../components/loading-skeleton/LoadingSkeleton";
 import styles from "./RunsPage.module.css";
 
-export function RunsPage() {
+export const RunsPage = () => {
   const [runs, setRuns] = useState<Run[]>([]);
   const [loadState, setLoadState] = useState<LoadState>("loading");
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<RunStatus | "all">("all");
   const [selectedRun, setSelectedRun] = useState<Run | null>(null);
+
+  const [urlState, setUrlState] = useRunsUrlState();
+  const { search, status: statusFilter, sort } = urlState;
 
   const load = useCallback(async () => {
     setLoadState("loading");
@@ -30,24 +34,66 @@ export function RunsPage() {
     }
   }, []);
 
-  const filteredRuns = useMemo(() => {
+  const setSearch = useCallback(
+    (value: string) => setUrlState((s) => ({ ...s, search: value })),
+    [setUrlState],
+  );
+
+  const setStatusFilter = useCallback(
+    (value: RunStatus | "all") => setUrlState((s) => ({ ...s, status: value })),
+    [setUrlState],
+  );
+
+  const handleSortChange = useCallback(
+    (field: SortField) =>
+      setUrlState((s) => ({
+        ...s,
+        sort:
+          s.sort.field === field
+            ? {
+                field,
+                direction: s.sort.direction === "asc" ? "desc" : "asc",
+              }
+            : { field, direction: "desc" },
+      })),
+    [setUrlState],
+  );
+
+  const visibleRuns = useMemo(() => {
     const q = search.trim().toLowerCase();
 
-    return runs.filter((run) => {
+    const filtered = runs.filter((run) => {
       if (statusFilter !== "all" && run.status !== statusFilter) return false;
       if (!q) return true;
-
       return (
         run.name.toLowerCase().includes(q) ||
         run.repository.toLowerCase().includes(q)
       );
     });
-  }, [runs, search, statusFilter]);
 
-  const resetFilters = useCallback(() => {
-    setSearch("");
-    setStatusFilter("all");
-  }, []);
+    const dir = sort.direction === "asc" ? 1 : -1;
+
+    return [...filtered].sort((a, b) => {
+      if (sort.field === "createdAt") {
+        return (
+          dir *
+          (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+        );
+      }
+
+      const av = a.durationSeconds;
+      const bv = b.durationSeconds;
+      if (av == null && bv == null) return 0;
+      if (av == null) return 1;
+      if (bv == null) return -1;
+      return dir * (av - bv);
+    });
+  }, [runs, search, statusFilter, sort]);
+
+  const resetFilters = useCallback(
+    () => setUrlState(DEFAULT_RUNS_URL_STATE),
+    [setUrlState],
+  );
 
   useEffect(() => {
     void load();
@@ -86,7 +132,7 @@ export function RunsPage() {
           </div>
         )}
 
-        {loadState === "ready" && filteredRuns.length === 0 && (
+        {loadState === "ready" && visibleRuns.length === 0 && (
           <div className={styles.state}>
             <h2>No runs found</h2>
             <p>Try a different search query or reset the filters.</p>
@@ -100,8 +146,13 @@ export function RunsPage() {
           </div>
         )}
 
-        {loadState === "ready" && filteredRuns.length > 0 && (
-          <List runs={filteredRuns} onSelect={setSelectedRun} />
+        {loadState === "ready" && visibleRuns.length > 0 && (
+          <List
+            runs={visibleRuns}
+            sort={sort}
+            onSelect={setSelectedRun}
+            onSortChange={handleSortChange}
+          />
         )}
       </div>
 
@@ -110,4 +161,4 @@ export function RunsPage() {
       )}
     </section>
   );
-}
+};
