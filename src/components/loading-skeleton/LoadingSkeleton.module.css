@@ -1,0 +1,119 @@
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 66px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 2fr) minmax(0, 1.2fr) minmax(0, 1.2fr)
+    110px minmax(0, 1fr) minmax(0, 0.8fr);
+  gap: 16px;
+  align-items: center;
+  padding: 14px 60px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.cell {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  font-weight: bold;
+}
+
+.bar {
+  display: inline-block;
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #eee9df 0%, #f7f4ec 50%, #eee9df 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.2s linear infinite;
+}
+
+.nameBar {
+  width: 45%;
+  height: 14px;
+}
+
+.pill {
+  width: 88px;
+  height: 22px;
+  border-radius: 999px;
+  background: #eee9df;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@media (max-width: 900px) {
+  .list {
+    padding-top: 28px;
+  }
+  .row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 14px;
+  }
+
+  .cell {
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 20px;
+  }
+
+  .cell::before {
+    content: "";
+    display: inline-block;
+    width: 64px;
+    height: 8px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #eee9df 0%, #f7f4ec 50%, #eee9df 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.2s linear infinite;
+    flex-shrink: 0;
+  }
+
+  .cell[data-label="Run"]::before {
+    display: none;
+  }
+  .cell[data-label="Run"] {
+    min-height: 22px;
+  }
+  .cell[data-label="Run"] .bar {
+    width: 55%;
+    height: 14px;
+  }
+  .cell[data-label="Repository"] .bar {
+    max-width: 120px;
+  }
+  .cell[data-label="Branch"] .bar {
+    max-width: 90px;
+  }
+  .cell[data-label="Created"] .bar {
+    max-width: 130px;
+  }
+  .cell[data-label="Duration"] .bar {
+    max-width: 70px;
+  }
+
+  .pill {
+    margin-right: 0;
+  }
+  .nameBar {
+    max-width: 64px;
+    max-height: 8px;
+  }
+}
